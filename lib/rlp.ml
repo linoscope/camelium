@@ -83,11 +83,9 @@ let decode s =
       in
       let sub_s = String.sub s ~pos:(i + 1 + sub_s_len_len) ~len:sub_s_len in
       (i + 1 + sub_s_len_len, `Rlp_data sub_s)
-    | prefix when Char.(prefix = '\xc0') ->
-      (i + 1, `Rlp_list [])
     | prefix ->
       (* [decode_list i _end] decodes list of items from substring s[i, _end).
-          Returns pair of (next index to start from, decoded item) *)
+          Returns pair (next index to start from, decoded item) *)
       let decode_list i _end =
         let rec loop acc i =
           if _end <= i then
@@ -99,6 +97,8 @@ let decode s =
         loop [] i
       in
       match prefix with
+      | _ when Char.(prefix = '\xc0') ->
+        (i + 1, `Rlp_list [])
       | _ when Char.(prefix < '\xf8') ->
         let body_len = Char.to_int prefix - 0xc0 in
         let ni, body_list = decode_list (i + 1) (i + body_len) in
