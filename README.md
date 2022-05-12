@@ -1,10 +1,10 @@
 # Camelium
 
-An toy ethereum client written in OCaml.
+An WIP toy ethereum client written in OCaml.
 
 ## TODO
 
-- [ ] RLP encoding/decoding
+- [x] RLP encoding/decoding
 - [ ] devp2p
   - [ ] Node discovery
   - [ ] RLPx
