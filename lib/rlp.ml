@@ -1,4 +1,4 @@
-open Base
+open Core
 
 type item = [
   | `Rlp_data of string

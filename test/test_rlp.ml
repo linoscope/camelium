@@ -1,5 +1,5 @@
 open Camelium
-open Base
+open Core
 open Stdio
 
 let print_hex_string s = s |> String.iter ~f:(fun c -> printf "\\x%02x" (Char.to_int c))

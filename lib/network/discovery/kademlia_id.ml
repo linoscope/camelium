@@ -1,8 +1,17 @@
-open Base
+open Core
 
 type t = string
 
+let sexp_of_t t =
+  t
+  |> String.to_list
+  |> List.map ~f:(fun c -> sprintf "\\x%02x" (Char.to_int c))
+  |> String.concat
+  |> Sexp.of_string
+
 let of_string s = s
+
+let to_string t = t
 
 let count_leading_zero_bits : char list -> int = function
   | [] -> 0
@@ -29,3 +38,5 @@ let distance t1 t2 =
   let leading_zero_bits_len = (List.length leading_zeros) * 8 + count_leading_zero_bits non_zeros in
   let bit_len = String.length t1 * 8 in
   bit_len - leading_zero_bits_len
+
+let equal = String.equal

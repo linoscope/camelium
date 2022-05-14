@@ -1,5 +1,5 @@
 open Camelium
-open! Base
+open! Core
 open! Stdio
 
 let%expect_test "test distance 0" =

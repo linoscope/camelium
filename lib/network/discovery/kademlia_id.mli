@@ -1,6 +1,10 @@
-type t
+(** ID used in Kademlia peer discovery. *)
+
+type t [@@deriving sexp_of]
 
 val of_string : string -> t
+
+val to_string : t -> string
 
 (** [distance t1 t2] calculates the "distance" between [t1] and [t2].
     The distance is calculated as: "# of bits in t1 and t2" - "# of leading 0 bits in (t1 xor t2)".
@@ -14,3 +18,5 @@ val of_string : string -> t
     This definition can be used instead of the "XOR distance" defined in the kademlia paper because
     we only use the "# of leading 0 bits in (t1 xor t2)" in kademlia anyways. *)
 val distance : t -> t -> int
+
+val equal : t -> t -> bool

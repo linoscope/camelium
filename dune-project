@@ -5,7 +5,7 @@
 (package
  (name camelium)
  (depends
-   base
+   core
    lwt
    lwt_ppx
    logs

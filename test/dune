@@ -1,5 +1,7 @@
 (library
  (name camelium_test)
- (libraries camelium base)
+ (libraries camelium core)
  (inline_tests)
  (preprocess (pps ppx_jane)))
+
+(include_subdirs unqualified)

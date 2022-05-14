@@ -1,6 +1,6 @@
 (library
  (name camelium)
- (libraries base eio)
+ (libraries core eio)
  (preprocess (pps ppx_jane)))
 
 (include_subdirs unqualified)
