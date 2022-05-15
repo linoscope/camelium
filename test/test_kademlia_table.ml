@@ -3,7 +3,7 @@ open! Core
 open! Stdio
 
 let create_node s =
-  let node_record = Node_record.{ id = "v4"; secp256k1 = "aaa"; } in
+  let node_record = Node_record.{ id = "v4"; signature = "aaa"; seq = 0; key_value_pairs = []} in
   Kademlia_node.create node_record Kademlia_id.(of_string s)
 
 let%expect_test "Adding self_node" =

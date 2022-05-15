@@ -1,4 +1,4 @@
-(** Information about the nodes managed in Kademlia peer discovery.  *)
+(** Nodes managed in Kademlia peer discovery.  *)
 
 type t [@@deriving sexp_of]
 

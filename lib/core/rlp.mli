@@ -1,7 +1,6 @@
-type item = [
-  | `Rlp_data of string
-  | `Rlp_list of item list
-]
+type item =
+  | Rlp_data of string
+  | Rlp_list of item list
 [@@deriving equal]
 
 val encode_int : int -> string

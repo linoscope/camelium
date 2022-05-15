@@ -1,9 +1,8 @@
 open Core
 
-type item = [
-  | `Rlp_data of string
-  | `Rlp_list of item list
-]
+type item =
+  | Rlp_data of string
+  | Rlp_list of item list
 [@@deriving equal]
 
 let encode_int n =
@@ -22,7 +21,7 @@ let decode_int s =
   |> List.fold ~init:0 ~f:(fun acc c -> acc * 0x100 + Char.to_int c)
 
 let rec encode = function
-  | `Rlp_data s ->
+  | Rlp_data s ->
     begin match String.length s with
       | 0 -> "\x80"
       | len when len = 1 && Char.(s.[0] < '\x80') -> s
@@ -39,7 +38,7 @@ let rec encode = function
           s
         ]
     end
-  | `Rlp_list items ->
+  | Rlp_list items ->
     match items with
     | [] -> "\xc0"
     | items ->
@@ -62,27 +61,27 @@ let rec encode = function
           body
         ]
 
-let encode_string s = encode (`Rlp_data s)
+let encode_string s = encode (Rlp_data s)
 
 let decode s =
   (* [loop i] decodes substring [i,) and returns pair (next index to start from, decoded item). *)
   let rec decode i =
     match s.[i] with
     | prefix when Char.(prefix < '\x80') ->
-      (i + 1, `Rlp_data s)
+      (i + 1, Rlp_data s)
     | prefix when Char.(prefix = '\x80') ->
-      (i + 1, `Rlp_data "")
+      (i + 1, Rlp_data "")
     | prefix when Char.(prefix < '\xb8') ->
       let offset = Char.to_int prefix - 0x80 in
       let sub_s = String.sub s ~pos:(i + 1) ~len:offset in
-      (i + 1 + offset, `Rlp_data sub_s)
+      (i + 1 + offset, Rlp_data sub_s)
     | prefix when Char.(prefix < '\xc0') ->
       let sub_s_len_len = Char.to_int prefix - 0xb7 in
       let sub_s_len =
         String.sub s ~pos:(i + 1) ~len:sub_s_len_len |> decode_int
       in
       let sub_s = String.sub s ~pos:(i + 1 + sub_s_len_len) ~len:sub_s_len in
-      (i + 1 + sub_s_len_len, `Rlp_data sub_s)
+      (i + 1 + sub_s_len_len, Rlp_data sub_s)
     | prefix ->
       (* [decode_list i _end] decodes list of items from substring s[i, _end).
           Returns pair (next index to start from, decoded item) *)
@@ -98,17 +97,17 @@ let decode s =
       in
       match prefix with
       | _ when Char.(prefix = '\xc0') ->
-        (i + 1, `Rlp_list [])
+        (i + 1, Rlp_list [])
       | _ when Char.(prefix < '\xf8') ->
         let body_len = Char.to_int prefix - 0xc0 in
         let ni, body_list = decode_list (i + 1) (i + body_len) in
-        (ni, `Rlp_list body_list)
+        (ni, Rlp_list body_list)
       | _  ->
         let body_len_len = Char.to_int prefix - 0xf7 in
         let body_len =
           String.sub s ~pos:(i + 1) ~len:body_len_len |> decode_int
         in
         let ni, body_list = decode_list (i + 1 + body_len_len) (i + body_len) in
-        (ni, `Rlp_list body_list)
+        (ni, Rlp_list body_list)
   in
   decode 0 |> snd
