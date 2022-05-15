@@ -13,20 +13,20 @@ let of_string s = s
 
 let to_string t = t
 
-let count_leading_zero_bits : char list -> int = function
-  | [] -> 0
-  | byte::_ ->
-    let b = Char.to_int byte in
-    let leading_zeros = ref 0 in
-    let mask = ref 0b10000000 in
-    while (b land !mask = 0) do
-      Int.incr leading_zeros;
-      mask := !mask lsr 1
-    done;
-    !leading_zeros
-
-(* The distance is calculated as: "# of bits in t1 and t2" - "# of leading 0 bits in (t1 xor t2)". *)
+(* calculate "# of bits in t1 and t2" - "# of leading 0 bits in (t1 xor t2)". *)
 let distance t1 t2 =
+  let count_leading_zero_bits : char list -> int = function
+    | [] -> 0
+    | byte::_ ->
+      let b = Char.to_int byte in
+      let leading_zeros = ref 0 in
+      let mask = ref 0b10000000 in
+      while (b land !mask = 0) do
+        Int.incr leading_zeros;
+        mask := !mask lsr 1
+      done;
+      !leading_zeros
+  in
   assert (String.length t1 = String.length t2);
   let xor_bytes =
     List.map2_exn

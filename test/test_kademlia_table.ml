@@ -8,7 +8,7 @@ let create_node s =
 
 let%expect_test "Adding self_node" =
   let self_node = create_node "\x00\x00" in
-  let t = Kademlia_table.create self_node 3 in
+  let t = Kademlia_table.create ~k:3 self_node in
 
   Kademlia_table.add t self_node
   |> Kademlia_table.sexp_of_add_result
@@ -17,7 +17,7 @@ let%expect_test "Adding self_node" =
 
 let%expect_test "Adding duplicate node" =
   let self_node = create_node "\x00\x00" in
-  let t = Kademlia_table.create self_node 3 in
+  let t = Kademlia_table.create ~k:3 self_node in
 
   let node = create_node "\x00\x04" in
   ignore @@ Kademlia_table.add t node;
@@ -28,7 +28,7 @@ let%expect_test "Adding duplicate node" =
 
 let%expect_test "Can add up-to k nodes in same bucket" =
   let self_node = create_node "\x00\x00" in
-  let t = Kademlia_table.create self_node 3 in
+  let t = Kademlia_table.create ~k:3 self_node in
 
   (* Add two nodes that fall into the same k-bucket  *)
   ignore @@ Kademlia_table.add t (create_node "\x00\x04"); (* 0b00001000 *)
@@ -49,7 +49,7 @@ let%expect_test "Can add up-to k nodes in same bucket" =
 
 let%expect_test "nearest_nodes returns nearest nodes" =
   let self_node = create_node "\x00\x00" in
-  let t = Kademlia_table.create self_node 3 in
+  let t = Kademlia_table.create ~k:3 self_node in
   ignore @@ Kademlia_table.add t (create_node "\x00\x04"); (* 0b00000100 *)
   ignore @@ Kademlia_table.add t (create_node "\x00\x01"); (* 0b00000001 *)
   ignore @@ Kademlia_table.add t (create_node "\x00\x02"); (* 0b00000010 *)

@@ -3,13 +3,13 @@ open Core
 (* TODO: Think about when we should "touch" the node. *)
 
 type t = {
-  self_node  : Kademlia_node.t;
-  k        : int;
-  kbuckets : Kademlia_node.t Doubly_linked.t array;
+  self_node : Kademlia_node.t;
+  k         : int;
+  kbuckets  : Kademlia_node.t Doubly_linked.t array;
 }
 [@@deriving sexp_of]
 
-let create self_node k = {
+let create ?(k = 16) self_node = {
   self_node;
   k;
   kbuckets = Array.init 160 ~f:(fun _ -> Doubly_linked.create ());
@@ -30,9 +30,11 @@ let add t node =
   else if Kademlia_node.(equal node t.self_node) then
     Self
   else if Doubly_linked.length kbucket < t.k then begin
+    (* Head contains the "most recently seen" node *)
     ignore @@ Doubly_linked.insert_first kbucket node;
     Added
   end else
+    (* Tail contains the "least recently seen" node *)
     let eviction_candidate = Doubly_linked.last kbucket |> Option.value_exn in
     Bucket_full eviction_candidate
 
