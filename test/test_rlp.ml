@@ -120,3 +120,18 @@ let%test "decode [56,] long list" =
         Rlp_list [Rlp_data "asdf"; Rlp_data "qwer";Rlp_data "zxcv"];
         Rlp_list [Rlp_data "asdf"; Rlp_data "qwer";Rlp_data "zxcv"];
         Rlp_list [Rlp_data "asdf"; Rlp_data "qwer";Rlp_data "zxcv"];])
+
+let%expect_test "Example from 'EIP-778: Ethereum Node Records'" =
+  Rlp.decode
+    "\xf8\x84\xb8\x40\x70\x98\xad\x86\x5b\x00\xa5\x82\x05\x19\x40\xcb\x9c\xf3\x68\x36\x57\x24\x11\xa4\x72\x78\x78\x30\x77\x01\x15\x99\xed\x5c\xd1\x6b\x76\xf2\x63\x5f\x4e\x23\x47\x38\xf3\x08\x13\xa8\x9e\xb9\x13\x7e\x3e\x3d\xf5\x26\x6e\x3a\x1f\x11\xdf\x72\xec\xf1\x14\x5c\xcb\x9c\x01\x82\x69\x64\x82\x76\x34\x82\x69\x70\x84\x7f\x00\x00\x01\x89\x73\x65\x63\x70\x32\x35\x36\x6b\x31\xa1\x03\xca\x63\x4c\xae\x0d\x49\xac\xb4\x01\xd8\xa4\xc6\xb6\xfe\x8c\x55\xb7\x0d\x11\x5b\xf4\x00\x76\x9c\xc1\x40\x0f\x32\x58\xcd\x31\x38\x83\x75\x64\x70\x82\x76\x5f"
+  |> Rlp.sexp_of_item
+  |> print_s;
+  [%expect {|
+    (Rlp_list
+     ((Rlp_data
+       "p\152\173\134[\000\165\130\005\025@\203\156\243h6W$\017\164rxx0w\001\021\153\237\\\209kv\242c_N#G8\243\b\019\168\158\185\019~>=\245&n:\031\017\223r\236\241\020\\\203\156")
+      (Rlp_data "\001") (Rlp_data id) (Rlp_data v4) (Rlp_data ip)
+      (Rlp_data "\127\000\000\001") (Rlp_data secp256k1)
+      (Rlp_data
+       "\003\202cL\174\rI\172\180\001\216\164\198\182\254\140U\183\r\017[\244\000v\156\193@\0152X\20518")
+      (Rlp_data udp) (Rlp_data v_))) |}]

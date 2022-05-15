@@ -3,7 +3,7 @@ open Core
 type item =
   | Rlp_data of string
   | Rlp_list of item list
-[@@deriving equal]
+[@@deriving equal, sexp_of]
 
 let encode_int n =
   let rec loop acc n =
@@ -68,7 +68,7 @@ let decode s =
   let rec decode i =
     match s.[i] with
     | prefix when Char.(prefix < '\x80') ->
-      (i + 1, Rlp_data s)
+      (i + 1, Rlp_data (String.of_char s.[i]))
     | prefix when Char.(prefix = '\x80') ->
       (i + 1, Rlp_data "")
     | prefix when Char.(prefix < '\xb8') ->
@@ -81,7 +81,7 @@ let decode s =
         String.sub s ~pos:(i + 1) ~len:sub_s_len_len |> decode_int
       in
       let sub_s = String.sub s ~pos:(i + 1 + sub_s_len_len) ~len:sub_s_len in
-      (i + 1 + sub_s_len_len, Rlp_data sub_s)
+      (i + 1 + sub_s_len_len + sub_s_len, Rlp_data sub_s)
     | prefix ->
       (* [decode_list i _end] decodes list of items from substring s[i, _end).
           Returns pair (next index to start from, decoded item) *)

@@ -1,6 +1,6 @@
 (library
  (name camelium)
- (libraries core lwt lwt.unix)
+ (libraries core lwt lwt.unix hacl-star secp256k1-internal base64)
  (preprocess (pps ppx_jane)))
 
 (include_subdirs unqualified)

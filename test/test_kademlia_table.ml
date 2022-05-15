@@ -3,8 +3,7 @@ open! Core
 open! Stdio
 
 let create_node s =
-  let node_record = Node_record.{ id = "v4"; signature = "aaa"; seq = 0; key_value_pairs = []} in
-  Kademlia_node.create node_record Kademlia_id.(of_string s)
+  Kademlia_node.create Node_record.For_tests.dummy_node_record Kademlia_id.(of_string s)
 
 let%expect_test "Adding self_node" =
   let self_node = create_node "\x00\x00" in
