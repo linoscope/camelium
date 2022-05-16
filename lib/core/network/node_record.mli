@@ -4,6 +4,8 @@ open Base
 type t
 [@@deriving sexp_of]
 
+val decode : string -> (t, string) Result.t
+
 val decode_and_verify : string -> (t, string) Result.t
 
 (* val encode : t -> string *)
