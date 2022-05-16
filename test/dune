@@ -1,6 +1,6 @@
 (library
  (name camelium_test)
- (libraries camelium core)
+ (libraries camelium core hex)
  (inline_tests)
  (preprocess (pps ppx_jane)))
 

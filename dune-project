@@ -15,4 +15,5 @@
    hacl-star
    secp256k1-internal
    base64
+   hex
 ))
