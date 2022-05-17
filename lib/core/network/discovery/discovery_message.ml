@@ -53,6 +53,7 @@ type t = {
 
 
 let decode s =
+  let open Result.Let_syntax in
   let decode_packet_type : char -> (packet_type, string) Result.t = function
     | '\x01' -> Ok Ping_type
     | '\x02' -> Ok Pong_type
@@ -64,13 +65,17 @@ let decode s =
   in
   let decode_endpoint_rlp : Rlp.item list -> (endpoint, string) Result.t = function
     | (Rlp_data ip)::(Rlp_data udp_port)::(Rlp_data tcp_port)::[] ->
-      Ok { ip = Util.inet_addr_of_bytes ip;
-           udp_port = Util.decode_string_int8 udp_port;
-           tcp_port = Util.decode_string_int8 tcp_port; }
+      let%bind udp_port = Util.decode_string_int udp_port in
+      let%bind tcp_port = Util.decode_string_int tcp_port in
+      let ip = Util.inet_addr_of_bytes ip in
+      Ok { ip; udp_port; tcp_port; }
     | _ -> Error "Invalid endpoint format"
   in
   let decode_enr_seq_rlp : Rlp.item list -> int option = function
-    | (Rlp_data x)::_ -> Some (Util.decode_string_int8 x)
+    | (Rlp_data x)::_ -> begin match Util.decode_string_int x with
+        | Ok x    -> Some x
+        | Error _ -> None
+      end
     | [] | _::_ -> None
   in
   let open Result.Let_syntax in
@@ -80,10 +85,10 @@ let decode s =
   let packet_data_rlp = String.sub s ~pos:98 ~len:(String.length s - 98) |> Rlp.decode in
   match packet_type, packet_data_rlp with
   | Ping_type, Rlp_list ((Rlp_data version)::(Rlp_list from_items)::(Rlp_list to_items)::(Rlp_data expiration)::rest) -> begin
-      let version = Util.decode_string_int8 version in
+      let%bind version = Util.decode_string_int version in
       let%bind from = decode_endpoint_rlp from_items in
       let%bind to_  = decode_endpoint_rlp to_items in
-      let expiration = Util.decode_string_int8 expiration in
+      let%bind expiration = Util.decode_string_int expiration in
       let enr_seq = decode_enr_seq_rlp rest in
       Ok (Ping {version; from; to_; expiration; enr_seq })
     end

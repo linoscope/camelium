@@ -17,6 +17,6 @@ let%expect_test "test" =
   |> print_s;
   [%expect {|
     (Ok
-     (Ping (version 4) (from ((ip 127.0.0.1) (udp_port 12) (tcp_port 21)))
-      (to_ ((ip 127.0.0.1) (udp_port 8) (tcp_port 13))) (expiration 67)
-      (enr_seq ()))) |}]
+     (Ping (version 4) (from ((ip 127.0.0.1) (udp_port 3322) (tcp_port 5544)))
+      (to_ ((ip 127.0.0.1) (udp_port 2222) (tcp_port 3333)))
+      (expiration 1136239445) (enr_seq ()))) |}]
