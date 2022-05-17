@@ -78,25 +78,44 @@ let decode s =
       end
     | [] | _::_ -> None
   in
+  let rec decode_nodes : Rlp.item list -> (node list, string) Result.t = function
+    | [] -> Ok []
+    | (Rlp_list (x::y::z::(Rlp_data node_id)::[]))::rest ->
+      let%bind endpoint = decode_endpoint_rlp [x; y; z] in
+      let%bind nodes = decode_nodes rest in
+      Ok ({node_id; endpoint}::nodes)
+    | rlps -> Error (Printf.sprintf "Invalid nodes format: %s" (rlps |> [%sexp_of : Rlp.item list] |> Sexp.to_string_hum))
+  in
   let open Result.Let_syntax in
   let _hash = String.sub s ~pos:0 ~len:32 in
   let _signature = String.sub s ~pos:32 ~len:65 in   (* TODO: Recover public key from signature *)
   let%bind packet_type = decode_packet_type s.[97] in
   let packet_data_rlp = String.sub s ~pos:98 ~len:(String.length s - 98) |> Rlp.decode in
   match packet_type, packet_data_rlp with
-  | Ping_type, Rlp_list ((Rlp_data version)::(Rlp_list from_items)::(Rlp_list to_items)::(Rlp_data expiration)::rest) -> begin
-      let%bind version = Util.decode_string_int version in
-      let%bind from = decode_endpoint_rlp from_items in
-      let%bind to_  = decode_endpoint_rlp to_items in
-      let%bind expiration = Util.decode_string_int expiration in
-      let enr_seq = decode_enr_seq_rlp rest in
-      Ok (Ping {version; from; to_; expiration; enr_seq })
-    end
-  | Pong_type, Rlp_list ((Rlp_list to_items)::(Rlp_data ping_hash)::rest) -> begin
-      let%bind to_  = decode_endpoint_rlp to_items in
-      let enr_seq = decode_enr_seq_rlp rest in
-      Ok (Pong { to_; ping_hash; enr_seq })
-    end
+  | Ping_type, Rlp_list ((Rlp_data version)::(Rlp_list from_items)::(Rlp_list to_items)::(Rlp_data expiration)::rest) ->
+    let%bind version = Util.decode_string_int version in
+    let%bind from = decode_endpoint_rlp from_items in
+    let%bind to_  = decode_endpoint_rlp to_items in
+    let%bind expiration = Util.decode_string_int expiration in
+    let enr_seq = decode_enr_seq_rlp rest in
+    Ok (Ping {version; from; to_; expiration; enr_seq })
+  | Pong_type, Rlp_list ((Rlp_list to_items)::(Rlp_data ping_hash)::rest) ->
+    let%bind to_  = decode_endpoint_rlp to_items in
+    let enr_seq = decode_enr_seq_rlp rest in
+    Ok (Pong { to_; ping_hash; enr_seq })
+  | Find_node_type, Rlp_list ((Rlp_data target)::(Rlp_data expiration)::_) ->
+    let%bind expiration = Util.decode_string_int expiration in
+    Ok (Find_node { target; expiration })
+  | Neighbors_type, Rlp_list ((Rlp_list node_rlps)::(Rlp_data expiration)::_) ->
+    let%bind nodes = decode_nodes node_rlps in
+    let%bind expiration = Util.decode_string_int expiration in
+    Ok (Neighbors {nodes; expiration})
+  | Enr_request_type, Rlp_list ((Rlp_data expiration)::_) ->
+    let%bind expiration = Util.decode_string_int expiration in
+    Ok (Enr_request {expiration})
+  | Enr_response_type, Rlp_list ((Rlp_data request_hash)::node_record_rlp::_) ->
+    let%bind node_record = Node_record.decode_rlp node_record_rlp in
+    Ok (Enr_response {request_hash; node_record})
   | packet_type, rlp_item ->
     Error (Printf.sprintf "Invalid packet data. Packet type:%s, RLP=%s"
              (sexp_of_packet_type packet_type |> Sexp.to_string)

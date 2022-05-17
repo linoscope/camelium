@@ -8,6 +8,8 @@ val decode : string -> (t, string) Result.t
 
 val decode_and_verify : string -> (t, string) Result.t
 
+val decode_rlp : Rlp.item -> (t, string) Result.t
+
 (* val encode : t -> string *)
 
 module For_tests : sig

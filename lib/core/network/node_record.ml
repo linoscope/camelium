@@ -14,14 +14,13 @@ type t = {
 
 let prefix = "enr:"
 
-let decode_raw s =
-  let decoded = Rlp.decode s in
-  match decoded with
-  | Rlp_data _
+let decode_rlp rlp =
+  match rlp with
+  | Rlp.Rlp_data _
   | Rlp_list []
   | Rlp_list [_]
   | Rlp_list [_; _] ->
-    let msg = Printf.sprintf "RLP length too short: %s" (decoded |> Rlp.sexp_of_item |> Sexp.to_string) in
+    let msg = Printf.sprintf "RLP length too short: %s" (rlp |> Rlp.sexp_of_item |> Sexp.to_string) in
     Error msg
   | Rlp_list (signature::seq::rest) ->
     match signature, seq with
@@ -43,9 +42,10 @@ let decode_raw s =
 let decode s =
   match String.chop_prefix s ~prefix with
   | None -> Error "Invalid prefix"
-  | Some s ->
-    let raw = Base64.decode_exn ~pad:false ~alphabet:Base64.uri_safe_alphabet s in
-    decode_raw raw
+  | Some base64 ->
+    let s = Base64.decode_exn ~pad:false ~alphabet:Base64.uri_safe_alphabet base64 in
+    let rlp = Rlp.decode s in
+    decode_rlp rlp
 
 let find (pairs : (string * string) list) (key : string) : string option =
   List.Assoc.find ~equal:String.equal pairs key
