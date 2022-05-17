@@ -17,19 +17,29 @@ let decode_string_int_exn s =
   decode_string_int s |> Result.ok_or_failwith
 
 let inet_addr_of_bytes s =
-  let parts =
+  let decode_ipv4 s =
     s
     |> String.to_list
     |> List.map ~f:(fun c -> c |> Char.to_int |> Int.to_string)
-  in
-  if List.length parts = 4 then
-    (* ipv4 *)
-    parts
     |> String.concat ~sep:"."
     |> Unix.Inet_addr.of_string
-  else
-    (* parts *)
-    (* |> String.concat ~sep:":" *)
-    (* |> (fun s -> Stdio.printf "ip=%s\n" s; s) *)
-    (* |> Unix.Inet_addr.of_string *)
-    Unix.Inet_addr.localhost
+  in
+  let decode_ipv6 s =
+    let rec loop acc = function
+      | [] ->
+        acc
+        |> List.rev
+        |> List.map ~f:(Printf.sprintf "%x")
+        |> String.concat ~sep:":"
+        |> Unix.Inet_addr.of_string
+      | x::y::r ->
+        let part = (0x100 * Char.to_int x) + Char.to_int y in
+        loop (part::acc) r
+      | [_] -> assert false
+    in
+    loop [] (String.to_list s)
+  in
+  match String.length s with
+  |  4 -> Ok (decode_ipv4 s)
+  | 16 -> Ok (decode_ipv6 s)
+  |  n -> Error (Printf.sprintf "Invalid IP bytes length: %d" n)

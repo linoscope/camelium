@@ -67,7 +67,7 @@ let decode s =
     | (Rlp_data ip)::(Rlp_data udp_port)::(Rlp_data tcp_port)::[] ->
       let%bind udp_port = Util.decode_string_int udp_port in
       let%bind tcp_port = Util.decode_string_int tcp_port in
-      let ip = Util.inet_addr_of_bytes ip in
+      let%bind ip = Util.inet_addr_of_bytes ip in
       Ok { ip; udp_port; tcp_port; }
     | _ -> Error "Invalid endpoint format"
   in
