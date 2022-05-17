@@ -52,5 +52,8 @@ type t = {
   packet_header : packet_header;
   packet_data   : packet_data;
 }
+[@@deriving sexp_of]
 
-val decode : string -> (packet_data, string) Result.t
+val decode : string -> (t, string) Result.t
+
+(* val encode : t -> string *)
