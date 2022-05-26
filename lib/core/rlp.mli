@@ -3,12 +3,8 @@ type item =
   | Rlp_list of item list
 [@@deriving equal, sexp_of]
 
-val encode_int : int -> string
-
 val encode : item -> string
 
-val encode_string : string -> string
-
-val decode_int : string -> int
+val item_of_int : int -> item
 
 val decode : string -> item

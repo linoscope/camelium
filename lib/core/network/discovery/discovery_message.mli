@@ -56,4 +56,4 @@ type t = {
 
 val decode : string -> (t, string) Result.t
 
-(* val encode : t -> string *)
+val encode : packet_data -> string

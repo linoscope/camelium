@@ -10,7 +10,7 @@ val decode_and_verify : string -> (t, string) Result.t
 
 val decode_rlp : Rlp.item -> (t, string) Result.t
 
-(* val encode : t -> string *)
+val encode_rlp : t -> Rlp.item
 
 module For_tests : sig
   val dummy_node_record : t

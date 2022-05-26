@@ -66,14 +66,14 @@ let decode s =
   in
   let decode_endpoint_rlp : Rlp.item list -> (endpoint, string) Result.t = function
     | (Rlp_data ip)::(Rlp_data udp_port)::(Rlp_data tcp_port)::[] ->
-      let%bind udp_port = Util.decode_string_int udp_port in
-      let%bind tcp_port = Util.decode_string_int tcp_port in
-      let%bind ip = Util.inet_addr_of_bytes ip in
+      let%bind udp_port = Codec.int_of_bytes udp_port in
+      let%bind tcp_port = Codec.int_of_bytes tcp_port in
+      let%bind ip = Codec.inet_addr_of_bytes ip in
       Ok { ip; udp_port; tcp_port; }
     | _ -> Error "Invalid endpoint format"
   in
   let decode_enr_seq_rlp : Rlp.item list -> int option = function
-    | (Rlp_data x)::_ -> begin match Util.decode_string_int x with
+    | (Rlp_data x)::_ -> begin match Codec.int_of_bytes x with
         | Ok x    -> Some x
         | Error _ -> None
       end
@@ -95,10 +95,10 @@ let decode s =
   let%bind packet_data =
     match packet_type, packet_data_rlp with
     | Ping_type, Rlp_list ((Rlp_data version)::(Rlp_list from_items)::(Rlp_list to_items)::(Rlp_data expiration)::rest) ->
-      let%bind version = Util.decode_string_int version in
+      let%bind version = Codec.int_of_bytes version in
       let%bind from = decode_endpoint_rlp from_items in
       let%bind to_  = decode_endpoint_rlp to_items in
-      let%bind expiration = Util.decode_string_int expiration in
+      let%bind expiration = Codec.int_of_bytes expiration in
       let enr_seq = decode_enr_seq_rlp rest in
       Ok (Ping {version; from; to_; expiration; enr_seq })
     | Pong_type, Rlp_list ((Rlp_list to_items)::(Rlp_data ping_hash)::rest) ->
@@ -106,14 +106,14 @@ let decode s =
       let enr_seq = decode_enr_seq_rlp rest in
       Ok (Pong { to_; ping_hash; enr_seq })
     | Find_node_type, Rlp_list ((Rlp_data target)::(Rlp_data expiration)::_) ->
-      let%bind expiration = Util.decode_string_int expiration in
+      let%bind expiration = Codec.int_of_bytes expiration in
       Ok (Find_node { target; expiration })
     | Neighbors_type, Rlp_list ((Rlp_list node_rlps)::(Rlp_data expiration)::_) ->
       let%bind nodes = decode_nodes node_rlps in
-      let%bind expiration = Util.decode_string_int expiration in
+      let%bind expiration = Codec.int_of_bytes expiration in
       Ok (Neighbors {nodes; expiration})
     | Enr_request_type, Rlp_list ((Rlp_data expiration)::_) ->
-      let%bind expiration = Util.decode_string_int expiration in
+      let%bind expiration = Codec.int_of_bytes expiration in
       Ok (Enr_request {expiration})
     | Enr_response_type, Rlp_list ((Rlp_data request_hash)::node_record_rlp::_) ->
       let%bind node_record = Node_record.decode_rlp node_record_rlp in
@@ -125,3 +125,53 @@ let decode s =
   in
   Ok {packet_header; packet_data}
 
+let encode packet_data =
+  let encode_endpoint ({ip; udp_port; tcp_port} : endpoint) : Rlp.item =
+    Rlp_list [
+      Rlp_data (Codec.bytes_of_inet_addr ip);
+      Rlp_data (Codec.bytes_of_int udp_port);
+      Rlp_data (Codec.bytes_of_int tcp_port);
+    ]
+  in
+  let encode_nodes (nodes : node list) : Rlp.item =
+    nodes
+    |> List.bind ~f:(fun { node_id = _; endpoint = { ip; udp_port; tcp_port} } ->
+        Rlp.[ Rlp_data (Codec.bytes_of_inet_addr ip);
+              Rlp_data (Codec.bytes_of_int udp_port);
+              Rlp_data (Codec.bytes_of_int tcp_port) ])
+    |> (fun l -> Rlp.Rlp_list l)
+  in
+  let rlp =
+    match packet_data with
+    | Ping { version; from; to_; expiration; enr_seq } ->
+      let version = Rlp.item_of_int version in
+      let from = encode_endpoint from in
+      let to_ = encode_endpoint to_ in
+      let expiration = Rlp.Rlp_data (Codec.bytes_of_int expiration) in
+      begin match enr_seq with
+        | None -> Rlp.Rlp_list [version; from; to_; expiration]
+        | Some enr_seq ->
+          let enr_seq = Rlp.Rlp_data (Codec.bytes_of_int enr_seq) in
+          Rlp.Rlp_list [version; from; to_; expiration; enr_seq]
+      end
+    | Pong { to_; ping_hash; enr_seq } ->
+      let to_ = encode_endpoint to_ in
+      begin match enr_seq with
+        | None -> Rlp.Rlp_list [to_; Rlp_data ping_hash]
+        | Some enr_seq ->
+          let enr_seq = Rlp.Rlp_data (Codec.bytes_of_int enr_seq) in
+          Rlp.Rlp_list [to_; Rlp_data ping_hash; enr_seq]
+      end
+    | Find_node { target; expiration } ->
+      let expiration = Rlp.Rlp_data (Codec.bytes_of_int expiration) in
+      Rlp_list [Rlp_data target; expiration]
+    | Neighbors { nodes; expiration } ->
+      let expiration = Rlp.Rlp_data (Codec.bytes_of_int expiration) in
+      Rlp.Rlp_list [encode_nodes nodes; expiration]
+    | Enr_request { expiration } ->
+      let expiration = Rlp.Rlp_data (Codec.bytes_of_int expiration) in
+      Rlp.Rlp_list [expiration]
+    | Enr_response { request_hash; node_record } ->
+      Rlp.Rlp_list [Rlp_data request_hash; Node_record.encode_rlp node_record]
+  in
+  Rlp.encode rlp

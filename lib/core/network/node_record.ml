@@ -47,6 +47,8 @@ let decode s =
     let rlp = Rlp.decode s in
     decode_rlp rlp
 
+let encode_rlp _ = assert false
+
 let find (pairs : (string * string) list) (key : string) : string option =
   List.Assoc.find ~equal:String.equal pairs key
 
@@ -62,8 +64,8 @@ let verify t =
 
 let decode_and_verify s =
   let open Result.Let_syntax in
-  decode s >>= fun decoded ->
-  verify decoded >>= fun verified ->
+  let%bind decoded = decode s in
+  let%bind verified = verify decoded in
   if verified then
     Ok decoded
   else

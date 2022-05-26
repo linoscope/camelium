@@ -1,6 +1,7 @@
 open Camelium
 open Core
 open Stdio
+open Unix
 
 let decode_and_print s =
   Hex.to_string (`Hex s)
@@ -92,3 +93,26 @@ let%expect_test "decode negibors" =
            (endpoint
             ((ip 2001:db8:85a3:8d3:1319:8a2e:370:7348) (udp_port 999)
              (tcp_port 1000)))))))))) |}]
+
+let%expect_test "encode ping" =
+  Discovery_message.Ping {
+    version = 4;
+    from = {
+      ip = Inet_addr.of_string "127.0.0.1";
+      udp_port = 3322;
+      tcp_port = 5544;
+    };
+    to_ = {
+      ip = Inet_addr.of_string "::1";
+      udp_port = 2222;
+      tcp_port = 3333;
+    };
+    expiration = 1136239445;
+    enr_seq = None;
+  }
+  |> Discovery_message.encode
+  |> Hex.of_string
+  |> Hex.show
+  |> print_endline;
+
+  [%expect {| ea04cb847f000001820cfa8215a8d790000000000000000000000000000000018208ae820d058443b9a355 |}]
