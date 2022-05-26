@@ -44,7 +44,9 @@ let%expect_test "Can add up-to k nodes in same bucket" =
   |> Kademlia_table.sexp_of_add_result
   |> print_s;
   (* returned eviction_candidate is the first node we added. *)
-  [%expect {| (Bucket_full ((node_record <opaque>) (kademlia_id "\\x00\\x04"))) |}]
+  [%expect {|
+    (Bucket_full
+     (Eviction_candidate ((node_record <opaque>) (kademlia_id "\\x00\\x04")))) |}]
 
 let%expect_test "nearest_nodes returns nearest nodes" =
   let self_node = create_node "\x00\x00" in

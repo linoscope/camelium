@@ -14,7 +14,7 @@ type add_result =
   | Already_existed
   | Added
   | Self
-  | Bucket_full of Kademlia_node.t (* Eviction candidate. *)
+  | Bucket_full of [`Eviction_candidate of Kademlia_node.t]
 [@@deriving sexp_of]
 
 val add : t -> Kademlia_node.t -> add_result

@@ -19,7 +19,7 @@ type add_result =
   | Already_existed
   | Added
   | Self
-  | Bucket_full of Kademlia_node.t [@sexp.opaque]
+  | Bucket_full of [`Eviction_candidate of Kademlia_node.t]
 [@@deriving sexp_of]
 
 let add t node =
@@ -36,7 +36,7 @@ let add t node =
   end else
     (* Tail contains the "least recently seen" node *)
     let eviction_candidate = Doubly_linked.last kbucket |> Option.value_exn in
-    Bucket_full eviction_candidate
+    Bucket_full (`Eviction_candidate eviction_candidate)
 
 let evict t node =
   let distance = Kademlia_node.distance t.self_node node in
